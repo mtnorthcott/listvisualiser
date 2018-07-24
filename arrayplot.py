@@ -1,8 +1,13 @@
 import os.path
+from random import shuffle
 from PIL import Image, ImageDraw
 
 COLOUR_WHITE = (255, 255, 255)
 COLOUR_RED = (255, 0, 0)
+
+class BytesWrapper(bytearray):
+    def write(self, data):
+        self.extend(data)
 
 class ArrayPlot(object):
     count_processed = 0
@@ -20,7 +25,6 @@ class ArrayPlot(object):
         if type(items) == list:
             self.array = items
             self.size = len(items)
-            self.max = max(items)
         else:
             raise TypeError("Parameter must be a list")
 
@@ -29,16 +33,20 @@ class ArrayPlot(object):
         self.array[i], self.array[j] = self.array[j], self.array[i]
         self._record([i, j])
 
-    def _record(self, highlight):
+    def _record(self, highlight=[]):
         img = Image.new(mode="RGB", size=(self.size, self.size))
         draw = ImageDraw.Draw(img)
 
         for i, value in enumerate(self.array):
             c = COLOUR_RED if i in highlight else COLOUR_WHITE
-            h = round(self.size * value / self.max)
+            h = round(self.size * value / max(self.array))
             draw.line([(i, self.size - 1), (i, self.size - h)], c, 1)
         
-        img.save(os.path.join(self.path, "{num}.jpg".format(num=self.count_processed)))
+        img_bytes = BytesWrapper()
+        img.save(img_bytes, format="JPEG")
+
+        # TODO handle img bytes
+
         self.count_processed += 1
     
     def __contains__(self, item):
@@ -63,16 +71,14 @@ class ArrayPlot(object):
         self.count_set += 1
         self._record([index])
         self.array.__setitem__(index, value)
-
-    def __sizeof__(self):
-        return self.frames.__sizeof__() + self.array.__sizeof__() + 16
     
     def __str__(self):
         return str(self.array)
 
 if __name__ == "__main__":
     arr = list(range(1,65))
-    a = ArrayPlot(r"C:\Programming\listplot\out", items=arr)
-    print(a)
-    a[0], a[3] = a[3], a[0]
-    print(a)
+    shuffle(arr)
+    a = ArrayPlot(r"C:\Programming\listvisualiser\in", items=arr)
+    
+    from algorithms import selection_sort
+    selection_sort.sort(a, 0, len(a))

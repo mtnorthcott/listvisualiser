@@ -1,2 +1,2 @@
-def sort(A, a, b):
+def sort(arr, a, b):
     pass
